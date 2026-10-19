@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../users/users.repository.js';
 import { JwtService } from '@nestjs/jwt';
-import bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +14,7 @@ export class AuthService {
         if (!existingUser) {
             throw new Error('User not found');
         }
-        const isPasswordValid = await bcrypt.compare(user.password, existingUser.password_hash);
+        const isPasswordValid = user.password === existingUser.password;
         if (!isPasswordValid) {
             throw new Error('Invalid password');
         }
