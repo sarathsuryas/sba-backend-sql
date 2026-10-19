@@ -1,4 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import pg from 'pg';
+import { PG_POOL } from '../database/database.constants.js';
+import { CreateUserDto } from './dto/create-user.dto.js';
 
 @Injectable()
-export class UsersRepository {}
+export class UsersRepository {
+  constructor(@Inject(PG_POOL) private readonly pool: pg.Pool) { }
+
+  async findByEmail(email: string): Promise<any> {
+    const { rows } = await this.pool.query(
+      'SELECT u.id,u.email,u.password,r.name AS role FROM portal_users u LEFT JOIN roles r ON u.role_id  = r.id WHERE u.email = $1',
+      [email]
+    );
+    return rows[0];
+  }
+  async create(dto: CreateUserDto) {
+    const result = await this.pool.query(
+      'INSERT INTO portal_users (email,password,role_id) values ($1,$2,$3) RETURNING id,email,is_active,created_at',
+      [dto.email, dto.password, dto.role_id]
+    )
+    return result.rows[0];
+  }
+  async findAll() {
+    const { rows } = await this.pool.query(
+      'SELECT u.id,u.email,u.is_active,u.created_at,r.name AS role FROM portal_users u INNER JOIN roles r ON u.role_id  = r.id',
+    )
+    return rows;
+  }
+    
+
+}
